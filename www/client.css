@@ -1,5 +1,5 @@
 #canvas {
+    position: fixed;
+    margin: auto;
     border: solid;
-    width: 100;
-    height: 200;
 }

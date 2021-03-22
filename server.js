@@ -1,5 +1,4 @@
-import * as express from 'express';
-import * as ws from 'ws';
+import express from 'express';
 
 // Global consts
 const HOST = '0.0.0.0';
@@ -13,3 +12,4 @@ app.get('/', (req, res) => {
 });
 
 var server = app.listen(PORT, HOST);
+console.log(`Listening at http://${HOST}:${PORT}`);
