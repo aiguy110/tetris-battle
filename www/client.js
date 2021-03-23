@@ -1,3 +1,17 @@
+const tapSound      = document.getElementById('tap');
+const tingSound     = document.getElementById('ting');
+const thudSound     = document.getElementById('thud');
+const swooshSound   = document.getElementById('swoosh');
+const gameOverSound = document.getElementById('game-over');
+
+tingSound.volume   = 0.75;
+swooshSound.volume = 0.075;
+
+function forcePlaySound(sound) {
+    sound.currentTime = 0;
+    sound.play();
+}
+
 const CellEnum = {
     'Empty':  0,
     'I':      1,
@@ -85,6 +99,9 @@ class TetrisGame {
         this.currentBlockName = 'T';
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
+
+        this.tickInterval = 700;
+        this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
     }
 
     drawCell(i, j, color) {
@@ -185,6 +202,8 @@ class TetrisGame {
     }
     
     moveCursorBlock(delta) {
+        clearTimeout(this.tickTimeout);
+
         let di = delta[0];
         let dj = delta[1];
         let newPos = [this.currentPos[0] + di, this.currentPos[1] + dj];
@@ -192,8 +211,13 @@ class TetrisGame {
         let shape = BlockShapes[this.currentBlockName];
         if (!this.isCollided(shape, newPos, this.currentRot)) {
             this.currentPos = newPos;
+        }else if (this.isCollided(shape, newPos, this.currentRot) && di==1 && dj==0) {
+            this.dropCursorBlock();
         }
+
         this.renderBoard();
+
+        this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
     }
 
     rotateCursorBlock(deltaRot) {
@@ -213,6 +237,7 @@ class TetrisGame {
             if (!this.isCollided(shape, newPos, newRot)) {
                 this.currentPos = newPos;
                 this.currentRot = newRot;
+                forcePlaySound(swooshSound);
                 break;
             }
         }
@@ -220,26 +245,84 @@ class TetrisGame {
     }
 
     dropCursorBlock() {
+        // Figure out where the block will land
         let currentBlockId    = CellEnum[ this.currentBlockName ];
         let currentBlockShape = BlockShapes[ this.currentBlockName ];
         let rotatedShape = rotateShape(currentBlockShape, this.currentRot);
         let contactPos = this.getPosOnContact(rotatedShape, this.currentPos, rotatedShape, 0);
         let i = contactPos[0];
         let j = contactPos[1];
+        
+        // Commit the block shape to those cells
         rotatedShape.forEach(delta => {
             let di = delta[0];
             let dj = delta[1];
             this.grid[i+di][j+dj] = currentBlockId;
         })
 
+        // Did we complete any rows?
+        this.handleCompletedRows();
+
+        // Reset the cursor
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
         this.currentBlockName = this.getRandomBlockName()
 
+        // Re-draw the board
         this.renderBoard()
+
+        // Play thud sound
+        forcePlaySound(thudSound);
+
+        // Check for Game Over
+        let newBlockShape = BlockShapes[ this.currentBlockName ];
+        if (this.isCollided(newBlockShape, this.currentPos, this.currentRot)) {
+            this.doGameOver();
+        }
+
     }
 
+    handleCompletedRows() {
+        let completedRows = [];
+        for(let i=0; i<TetrisGame.rows; i++) {
+            let rowIsComplete = true;
+            for(let j=0; j<TetrisGame.cols; j++) {
+                if (this.grid[i][j] == CellEnum.Empty || this.grid[i][j] == CellEnum.Filler) {
+                    rowIsComplete = false;
+                    break
+                }
+            }
+            if(rowIsComplete) {
+                completedRows.push(i);
+            }
+        }
+        completedRows.forEach( row => this.deleteRow(row) );
+        if (completedRows.length > 0) {
+            forcePlaySound(tingSound);
+        }
+    }
 
+    deleteRow(row) {
+        // Shift everything above this row down
+        for (let i=row; i>0; i--) {
+            for(let j=0; j<TetrisGame.cols; j++) {
+                this.grid[i][j] = this.grid[i-1][j];
+            }
+        }
+
+        // Clear the top row
+        for(let j=0; j<TetrisGame.cols; j++) {
+            this.grid[0][j] = CellEnum.Empty;
+        }
+    }
+
+    doGameOver() {
+        this.currentPos = [-100, 0];
+        clearTimeout(this.tickTimeout);
+        forcePlaySound(gameOverSound);
+        setTimeout(() => alert('Game Over'), 1000);
+        document.removeEventListener('keydown', keyboardEventHandler);
+    }
 }
 
 
@@ -249,8 +332,7 @@ var game = new TetrisGame(ctx);
 game.renderBoard();
 
 // Add event listeners
-document.addEventListener('keydown', event => {
-    console.log(event)
+function keyboardEventHandler(event) {
     LEFT_KEYS  = ['ArrowLeft' , 'KeyA' ];
     RIGHT_KEYS = ['ArrowRight', 'KeyD' ];
     DOWN_KEYS  = ['ArrowDown' , 'KeyS' ];
@@ -271,4 +353,5 @@ document.addEventListener('keydown', event => {
     }else if ( LROT_KEYS.includes(event.code) ) {
         game.rotateCursorBlock(-1);
     }
-});
+}
+document.addEventListener('keydown', keyboardEventHandler);
