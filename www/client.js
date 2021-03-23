@@ -1,8 +1,12 @@
-const tapSound      = document.getElementById('tap');
 const tingSound     = document.getElementById('ting');
 const thudSound     = document.getElementById('thud');
 const swooshSound   = document.getElementById('swoosh');
 const gameOverSound = document.getElementById('game-over');
+
+tingSound.load();
+thudSound.load();
+swooshSound.load();
+gameOverSound.load();
 
 tingSound.volume   = 0.75;
 swooshSound.volume = 0.075;
@@ -86,7 +90,8 @@ class TetrisGame {
     static cols = 10;
     static defaultPos = [0, 5];
     static defaultRot = 0;
-
+    static minTickInterval = 200;
+    
 
     constructor(ctx){
         this.ctx = ctx;
@@ -299,6 +304,10 @@ class TetrisGame {
         completedRows.forEach( row => this.deleteRow(row) );
         if (completedRows.length > 0) {
             forcePlaySound(tingSound);
+            this.tickInterval -= 50;
+            if (this.tickInterval < TetrisGame.minTickInterval) {
+                this.tickInterval = TetrisGame.minTickInterval;
+            }
         }
     }
 
