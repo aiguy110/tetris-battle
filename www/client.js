@@ -90,7 +90,9 @@ class TetrisGame {
     static cols = 10;
     static defaultPos = [0, 5];
     static defaultRot = 0;
+    static initialTickInterval = 750;
     static minTickInterval = 200;
+    static tickIntervalDecayRate = 50;
     
 
     constructor(ctx){
@@ -105,7 +107,7 @@ class TetrisGame {
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
 
-        this.tickInterval = 700;
+        this.tickInterval = TetrisGame.initialTickInterval;
         this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
     }
 
@@ -304,7 +306,7 @@ class TetrisGame {
         completedRows.forEach( row => this.deleteRow(row) );
         if (completedRows.length > 0) {
             forcePlaySound(tingSound);
-            this.tickInterval -= 50;
+            this.tickInterval -= TetrisGame.tickIntervalDecayRate;
             if (this.tickInterval < TetrisGame.minTickInterval) {
                 this.tickInterval = TetrisGame.minTickInterval;
             }
