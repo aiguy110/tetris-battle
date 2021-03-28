@@ -8,7 +8,7 @@ thudSound.load();
 swooshSound.load();
 gameOverSound.load();
 
-tingSound.volume   = 0.75;
+tingSound.volume   = 0.25;
 swooshSound.volume = 0.075;
 
 function forcePlaySound(sound) {
@@ -52,7 +52,7 @@ const BlockShapes = {
     'L': [[ 0, 0],
           [ 1, 0],
           [ 2, 0],
-          [ 2,-1]],
+          [ 2, 1]],
     'O': [[ 0, 0],
           [ 1, 0],
           [ 0, 1],
@@ -85,6 +85,18 @@ function rotateShape(shape, rotCount) {
     }
     return shape;
 }
+
+function getUrlParams() {
+    let paramsString = window.location.href.split('?')[1];
+    let kvStrings = paramsString.split('&');
+    let params = {};
+    kvStrings.forEach(kvStr => {
+        let kvPair = kvStr.split('=');
+        params[ kvPair[0] ] = kvPair[1];
+    });
+    return params;
+}
+
 class TetrisGame {
     static rows = 20;
     static cols = 10;
@@ -103,6 +115,10 @@ class TetrisGame {
             this.grid.push( new Array(TetrisGame.cols).fill(CellEnum.Empty) );
         }
 
+        this.currentBlockName = null;
+    }
+
+    startGame(){
         this.currentBlockName = 'T';
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
@@ -199,13 +215,15 @@ class TetrisGame {
         }
 
         // Draw cursor block and shadow
-        let shape       = BlockShapes[ this.currentBlockName ];
-        let solidColor  = CellColors[ CellEnum[this.currentBlockName] ];
-        let shadowColor = solidColor.substr(0, 7) + '44';
-        let contactPos  = this.getPosOnContact(shape, this.currentPos, this.currentRot);
-        
-        this.drawBlock( contactPos     , this.currentRot, shape, shadowColor); // Draw shadow first...
-        this.drawBlock( this.currentPos, this.currentRot, shape, solidColor ); // so solid block can cover it.
+        if (this.currentBlockName != null) {
+            let shape       = BlockShapes[ this.currentBlockName ];
+            let solidColor  = CellColors[ CellEnum[this.currentBlockName] ];
+            let shadowColor = solidColor.substr(0, 7) + '44';
+            let contactPos  = this.getPosOnContact(shape, this.currentPos, this.currentRot);
+            
+            this.drawBlock( contactPos     , this.currentRot, shape, shadowColor); // Draw shadow first...
+            this.drawBlock( this.currentPos, this.currentRot, shape, solidColor ); // so solid block can cover it.
+        }
     }
     
     moveCursorBlock(delta) {
@@ -328,7 +346,7 @@ class TetrisGame {
     }
 
     doGameOver() {
-        this.currentPos = [-100, 0];
+        this.currentBlockName = null;
         clearTimeout(this.tickTimeout);
         forcePlaySound(gameOverSound);
         setTimeout(() => alert('Game Over'), 1000);
