@@ -103,7 +103,7 @@ class TetrisGame {
     static defaultPos = [0, 5];
     static defaultRot = 0;
     static initialTickInterval = 750;
-    static minTickInterval = 200;
+    static minTickInterval = 400;
     static tickIntervalDecayRate = 50;
     
 
@@ -335,9 +335,9 @@ class TetrisGame {
             }
         }
         if (completedRows.length > 1) {
-            let currentFlllerLines = this.getFillerLines();
-            let rowsToDelete = Math.min(completedRows.length, currentFlllerLines);
-            let rowsToSend   = Math.max(0, completedRows.length-currentFlllerLines);
+            let currentFillerLines = this.getFillerLines();
+            let rowsToDelete = Math.min(completedRows.length, currentFillerLines);
+            let rowsToSend   = Math.max(0, completedRows.length-currentFillerLines-1);
             for(let n=0; n<rowsToDelete; n++) {
                 this.deleteRow(TetrisGame.rows-1);
             }
@@ -365,8 +365,12 @@ class TetrisGame {
         this.currentBlockName = null;
         clearTimeout(this.tickTimeout);
         forcePlaySound(gameOverSound);
-        setTimeout(() => alert('Game Over'), 1000);
+        setTimeout(() => { 
+            alert('Game Over');
+            window.location.href = '/';
+        }, 1000);
         document.removeEventListener('keydown', keyboardEventHandler);
+        this.sendGameOver(socket);
     }
 
     getFillerLines() {
@@ -381,7 +385,7 @@ class TetrisGame {
         return lineCount;
     }
 
-    addFillerLine() {
+    addFillerRow() {
         // Move everything up one
         for(let i=0; i<TetrisGame.rows-1; i++) {
             for(let j=0; j<TetrisGame.cols; j++) {
@@ -393,6 +397,8 @@ class TetrisGame {
         for(let j=0; j<TetrisGame.cols; j++) {
             this.grid[TetrisGame.rows-1][j] = CellEnum.Filler;
         }
+
+        this.sendBoardUpdate(socket);
     }
 
     sendBoardUpdate(socket) {
@@ -426,6 +432,16 @@ class TetrisGame {
             player: urlParams.name,
             battleId: urlParams.battleId,
             rowCount: count,
+        });
+        socket.send(message);
+    }
+
+    sendGameOver(socket) {
+        let urlParams = getUrlParams();
+        let message = JSON.stringify({
+            type: 'gameOver',
+            player: urlParams.name,
+            battleId: urlParams.battleId,
         });
         socket.send(message);
     }
@@ -495,8 +511,16 @@ function wsMessageHandler( event ) {
             return;
         }
         for(let n=0;n<messageObj.rowCount; n++) {
-            myGame.addFillerLine();
+            myGame.addFillerRow();
         }
+        myGame.renderBoard();
+        myGame.sendBoardUpdate();
+    }else if (messageObj.type == 'gameOver'){
+        if (messageObj.player == getUrlParams().name) {
+            return;
+        }
+        alert('You win!');
+        window.location.href = '/';
     }
 }
 socket.onmessage = wsMessageHandler;

@@ -4,7 +4,7 @@ import bp from 'body-parser';
 
 // Global consts
 const HOST = '0.0.0.0';
-const PORT = 8080;
+const PORT = 80;
 
 // Active Battle info
 var battles = {}
@@ -71,11 +71,26 @@ wsServer.on('connection', socket => {
             }
         }
 
+        // At this point, any message should include a known battleId. Abort execution of this function if not.
+        if( !('battleId' in messageObj) || !(messageObj.battleId in battles) ){
+            console.log('The following message does not contain a valid battleId', messageObj);
+            return;
+        }
+
         // Whatever the message, send it on to everyone in the battle
         Object.keys(battles[messageObj.battleId].players).forEach(playerName => {
             let playerSocket = battles[messageObj.battleId].players[playerName];
             playerSocket.send(messageString);
         });
+
+        // If this is a Game Over message, delete this battleId so it can be reused
+        if (messageObj.type == 'gameOver') {
+            for(let playerName in  battles[messageObj.battleId].players) {
+                battles[messageObj.battleId].players[playerName].terminate();
+            }
+            delete battles[messageObj.battleId];
+            console.log('Game with battleId', messageObj.battleId, 'ended.', messageObj.player, 'lost.' );
+        }
     })
 })
 
