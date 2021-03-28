@@ -128,8 +128,8 @@ class TetrisGame {
     }
 
     drawCell(i, j, color) {
-        const cellWidth  = ctx.canvas.width  / TetrisGame.cols;
-        const cellHeight = ctx.canvas.height / TetrisGame.rows;
+        const cellWidth  = this.ctx.canvas.width  / TetrisGame.cols;
+        const cellHeight = this.ctx.canvas.height / TetrisGame.rows;
 
         this.ctx.fillStyle = color;
         this.ctx.fillRect(j*cellWidth  + 1.5, 
@@ -190,7 +190,7 @@ class TetrisGame {
 
         // Clear canvas
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height );
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height );
 
         // Draw grid lines
         this.ctx.strokeStyle = '#888888';
@@ -241,6 +241,7 @@ class TetrisGame {
         }
 
         this.renderBoard();
+        this.sendCursorUpdate(socket);
 
         this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
     }
@@ -299,6 +300,10 @@ class TetrisGame {
         // Play thud sound
         forcePlaySound(thudSound);
 
+        // Let our opponent know about our move
+        this.sendBoardUpdate(socket);
+        this.sendCursorUpdate(socket);
+
         // Check for Game Over
         let newBlockShape = BlockShapes[ this.currentBlockName ];
         if (this.isCollided(newBlockShape, this.currentPos, this.currentRot)) {
@@ -329,6 +334,17 @@ class TetrisGame {
                 this.tickInterval = TetrisGame.minTickInterval;
             }
         }
+        if (completedRows.length > 1) {
+            let currentFlllerLines = this.getFillerLines();
+            let rowsToDelete = Math.min(completedRows.length, currentFlllerLines);
+            let rowsToSend   = Math.max(0, completedRows.length-currentFlllerLines);
+            for(let n=0; n<rowsToDelete; n++) {
+                this.deleteRow(TetrisGame.rows-1);
+            }
+            if (rowsToSend > 0) {
+                this.sendFillerRows(socket, rowsToSend);
+            }
+        }
     }
 
     deleteRow(row) {
@@ -352,15 +368,81 @@ class TetrisGame {
         setTimeout(() => alert('Game Over'), 1000);
         document.removeEventListener('keydown', keyboardEventHandler);
     }
+
+    getFillerLines() {
+        let lineCount = 0;
+        for (let i=TetrisGame.rows-1; i>=0; i--) {
+            if(this.grid[i][0] == CellEnum.Filler){
+                lineCount++;
+            }else{
+                break;
+            }
+        }
+        return lineCount;
+    }
+
+    addFillerLine() {
+        // Move everything up one
+        for(let i=0; i<TetrisGame.rows-1; i++) {
+            for(let j=0; j<TetrisGame.cols; j++) {
+                this.grid[i][j] = this.grid[i+1][j];
+            }
+        }
+        
+        // Fill the bottom row
+        for(let j=0; j<TetrisGame.cols; j++) {
+            this.grid[TetrisGame.rows-1][j] = CellEnum.Filler;
+        }
+    }
+
+    sendBoardUpdate(socket) {
+        let urlParams = getUrlParams();
+        let message = JSON.stringify({
+            type: 'boardUpdate',
+            player: urlParams.name,
+            battleId: urlParams.battleId,
+            grid: this.grid
+        });
+        socket.send(message);
+    }
+
+    sendCursorUpdate(socket) {
+        let urlParams = getUrlParams();
+        let message = JSON.stringify({
+            type: 'cursorUpdate',
+            player: urlParams.name,
+            battleId: urlParams.battleId,
+            pos: this.currentPos,
+            rot: this.currentRot,
+            blockName: this.currentBlockName 
+        });
+        socket.send(message);
+    }
+
+    sendFillerRows(socket, count) {
+        let urlParams = getUrlParams();
+        let message = JSON.stringify({
+            type: 'fillerRows',
+            player: urlParams.name,
+            battleId: urlParams.battleId,
+            rowCount: count,
+        });
+        socket.send(message);
+    }
+
 }
 
 
-// Initialize TetrisGame object
-var ctx = document.getElementById('canvas').getContext('2d');
-var game = new TetrisGame(ctx);
-game.renderBoard();
+// Initialize TetrisGame objects
+var myCtx = document.getElementById('my-board-canvas').getContext('2d');
+var myGame = new TetrisGame(myCtx);
+myGame.renderBoard();
 
-// Add event listeners
+var oppCtx = document.getElementById('opponent-board-canvas').getContext('2d');
+var oppGame = new TetrisGame(oppCtx);
+oppGame.renderBoard();
+
+// Add input event listeners
 function keyboardEventHandler(event) {
     LEFT_KEYS  = ['ArrowLeft' , 'KeyA' ];
     RIGHT_KEYS = ['ArrowRight', 'KeyD' ];
@@ -370,17 +452,62 @@ function keyboardEventHandler(event) {
     DROP_KEYS  = ['ArrowUp'   , 'KeyW', 'Space'];
 
     if ( RIGHT_KEYS.includes(event.code) ) {
-        game.moveCursorBlock([0, 1]);
+        myGame.moveCursorBlock([0, 1]);
     }else if ( LEFT_KEYS.includes(event.code) ) {
-        game.moveCursorBlock([0,-1]);
+        myGame.moveCursorBlock([0,-1]);
     }else if ( DOWN_KEYS.includes(event.code) ) {
-        game.moveCursorBlock([1, 0]);
+        myGame.moveCursorBlock([1, 0]);
     }else if ( DROP_KEYS.includes(event.code) ) {
-        game.dropCursorBlock();
+        myGame.dropCursorBlock();
     }else if ( RROT_KEYS.includes(event.code) ) {
-        game.rotateCursorBlock(1);
+        myGame.rotateCursorBlock(1);
     }else if ( LROT_KEYS.includes(event.code) ) {
-        game.rotateCursorBlock(-1);
+        myGame.rotateCursorBlock(-1);
     }
 }
 document.addEventListener('keydown', keyboardEventHandler);
+
+// Initialize WebSocket
+var socket = new WebSocket('ws://' + window.location.host);
+
+// Add WebSocket message listeners
+function wsMessageHandler( event ) {
+    let messageObj = JSON.parse( event.data );
+    if (messageObj.type == 'start') {
+        // TODO: Show the other players name somewhere
+        myGame.startGame();
+    }else if (messageObj.type == 'boardUpdate') {
+        if (messageObj.player == getUrlParams().name) {
+            return;
+        }
+        oppGame.grid = messageObj.grid;
+        oppGame.renderBoard();
+    }else if (messageObj.type == 'cursorUpdate') {
+        if (messageObj.player == getUrlParams().name) {
+            return;
+        }
+        oppGame.currentPos = messageObj.pos;
+        oppGame.currentRot = messageObj.rot;
+        oppGame.currentBlockName = messageObj.blockName;
+        oppGame.renderBoard();
+    }else if (messageObj.type == 'fillerRows'){
+        if (messageObj.player == getUrlParams().name) {
+            return;
+        }
+        for(let n=0;n<messageObj.rowCount; n++) {
+            myGame.addFillerLine();
+        }
+    }
+}
+socket.onmessage = wsMessageHandler;
+
+// Send the server a hello via the WebSocket
+socket.onopen = () => {
+    let urlParams = getUrlParams();
+    registrationMessage = { 
+        type: 'register',
+        name: urlParams.name,
+        battleId: urlParams.battleId
+    }
+    socket.send( JSON.stringify(registrationMessage) );
+}
