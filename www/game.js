@@ -100,12 +100,13 @@ function getUrlParams() {
 class TetrisGame {
     static rows = 20;
     static cols = 10;
+    
     static defaultPos = [0, 5];
     static defaultRot = 0;
+    
     static initialTickInterval = 750;
     static minTickInterval = 400;
     static tickIntervalDecayRate = 50;
-    
 
     constructor(ctx){
         this.ctx = ctx;
@@ -116,15 +117,26 @@ class TetrisGame {
         }
 
         this.currentBlockName = null;
+        this.storedBlockName = null;
+        this.blockRing = null;
+        this.blockRingInd = 0;
+
+        this.storageWindow = null;
+        this.queueWindows  = null;
     }
 
-    startGame(){
-        this.currentBlockName = 'T';
+    startGame(blockRing){
+        this.blockRing = blockRing;
+        this.currentBlockName = this.blockRing[0];
+        this.blockRingInd = 1;
+        
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
 
         this.tickInterval = TetrisGame.initialTickInterval;
         this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
+
+        this.updateQueueWindows();
     }
 
     drawCell(i, j, color) {
@@ -292,10 +304,11 @@ class TetrisGame {
         // Reset the cursor
         this.currentPos = TetrisGame.defaultPos;
         this.currentRot = TetrisGame.defaultRot;
-        this.currentBlockName = this.getRandomBlockName()
+        this.incramentBlockRing();
 
-        // Re-draw the board
-        this.renderBoard()
+        // Re-draw things
+        this.renderBoard();
+        this.updateQueueWindows();
 
         // Play thud sound
         forcePlaySound(thudSound);
@@ -310,6 +323,37 @@ class TetrisGame {
             this.doGameOver();
         }
 
+    }
+
+    incramentBlockRing() {
+        this.currentBlockName = this.blockRing[ this.blockRingInd ];
+        this.blockRingInd = (this.blockRingInd + 1) % this.blockRing.length;
+    }
+
+    updateQueueWindows() {
+        if(this.queueWindows != null) {
+            for(let i=0; i<this.queueWindows.length; i++) {
+                let ringInd = (this.blockRingInd + i) % this.blockRing.length;
+                this.queueWindows[i].setBlock( this.blockRing[ringInd] );
+            }
+        }
+    }
+
+    doStorageSwap() {
+        // Do we have anything in storage?
+        if (this.storageWindow.blockName == null) {
+            // Nope
+            storageWindow.setBlock( this.currentBlockName );
+            this.incramentBlockRing();
+            this.renderBoard();
+            this.updateQueueWindows();
+        } else {
+            // Yep
+            let temp = this.currentBlockName;
+            this.currentBlockName = this.storageWindow.blockName;
+            this.storageWindow.setBlock(temp);
+            this.renderBoard();
+        }
     }
 
     handleCompletedRows() {
@@ -448,11 +492,91 @@ class TetrisGame {
 
 }
 
+class BlockWindow {
+    static rows=4;
+    static cols=4;
+
+    constructor(ctx) {
+        this.ctx = ctx;
+        this.blockName = null;
+    }
+
+    setBlock(blockName) {
+        this.blockName = blockName;
+        this.render();
+    }
+
+    render() {
+        const cellWidth  = this.ctx.canvas.width  / BlockWindow.cols;
+        const cellHeight = this.ctx.canvas.height / BlockWindow.rows;
+
+        // Clear canvas
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height );
+
+        // Draw our block
+        if (this.blockName == null) {
+            return;
+        }
+        let blockId = CellEnum[this.blockName];
+        let shape   = BlockShapes[this.blockName];
+        let color   = CellColors[blockId];
+        
+        let left   = null;
+        let right  = null;
+        let top    = null;
+        let bottom = null;
+        shape.forEach( delta => {
+            let i = delta[0];
+            let j = delta[1];
+
+            let cellLeft   =  j    * cellWidth;
+            let cellRight  = (j+1) * cellWidth;
+            let cellTop    =  i    * cellHeight;
+            let cellBottom = (i+1) * cellHeight;
+
+            if (left   == null || cellLeft   < left   ) left   = cellLeft;
+            if (right  == null || cellRight  > right  ) right  = cellRight;
+            if (top    == null || cellTop    < top    ) top    = cellTop;
+            if (bottom == null || cellBottom > bottom ) bottom = cellBottom;
+        } );
+
+        let xOffset = (this.ctx.canvas.width  - left - right ) / 2;
+        let yOffset = (this.ctx.canvas.height - top  - bottom) / 2;
+
+        shape.forEach( delta => {
+            let i = delta[0];
+            let j = delta[1];
+
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(j*cellWidth  + 1.5 + xOffset, 
+                              i*cellHeight + 1.5 + yOffset, 
+                              cellWidth    - 1, 
+                              cellHeight   - 1);
+        } ); 
+    }
+}
+
+// Initialize BlockWindow objects
+var storageWindowCtx = document.getElementById('storage-block').getContext('2d');
+var storageWindow = new BlockWindow(storageWindowCtx);
+
+var queueWindow1Ctx = document.getElementById('queue-block-1').getContext('2d');
+var queueWindow1 = new BlockWindow(queueWindow1Ctx);
+
+var queueWindow2Ctx = document.getElementById('queue-block-2').getContext('2d');
+var queueWindow2 = new BlockWindow(queueWindow2Ctx);
+
+var queueWindow3Ctx = document.getElementById('queue-block-3').getContext('2d');
+var queueWindow3 = new BlockWindow(queueWindow3Ctx);
 
 // Initialize TetrisGame objects
 var myCtx = document.getElementById('my-board-canvas').getContext('2d');
 var myGame = new TetrisGame(myCtx);
 myGame.renderBoard();
+
+myGame.storageWindow = storageWindow;
+myGame.queueWindows = [queueWindow1, queueWindow2, queueWindow3];
 
 var oppCtx = document.getElementById('opponent-board-canvas').getContext('2d');
 var oppGame = new TetrisGame(oppCtx);
@@ -466,6 +590,7 @@ function keyboardEventHandler(event) {
     LROT_KEYS  = ['PageUp'    , 'KeyQ' ];
     RROT_KEYS  = ['PageDown'  , 'KeyE' ];
     DROP_KEYS  = ['ArrowUp'   , 'KeyW', 'Space'];
+    STORE_KEYS = ['Enter'     , 'KeyF'];
 
     if ( RIGHT_KEYS.includes(event.code) ) {
         myGame.moveCursorBlock([0, 1]);
@@ -479,6 +604,8 @@ function keyboardEventHandler(event) {
         myGame.rotateCursorBlock(1);
     }else if ( LROT_KEYS.includes(event.code) ) {
         myGame.rotateCursorBlock(-1);
+    }else if ( STORE_KEYS.includes(event.code) ) {
+        myGame.doStorageSwap();
     }
 }
 document.addEventListener('keydown', keyboardEventHandler);
@@ -491,7 +618,7 @@ function wsMessageHandler( event ) {
     let messageObj = JSON.parse( event.data );
     if (messageObj.type == 'start') {
         // TODO: Show the other players name somewhere
-        myGame.startGame();
+        myGame.startGame(messageObj.blockRing);
     }else if (messageObj.type == 'boardUpdate') {
         if (messageObj.player == getUrlParams().name) {
             return;

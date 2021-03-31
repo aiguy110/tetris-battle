@@ -6,6 +6,19 @@ import bp from 'body-parser';
 const HOST = '0.0.0.0';
 const PORT = 80;
 
+// Generate lists of random block names
+function genRandomBlockRing() {
+    const possibleBlocks = 'IJLOSTZ';
+    let blockRing = '';
+    while( blockRing.length < 10000 ){
+        let rndChar = possibleBlocks[Math.floor(Math.random()*possibleBlocks.length)];
+        if (blockRing[blockRing.length-1] != rndChar) {
+            blockRing = blockRing + rndChar;
+        }
+    }
+    return blockRing;
+}
+
 // Active Battle info
 var battles = {}
 
@@ -62,7 +75,8 @@ wsServer.on('connection', socket => {
             if (Object.keys(battles[messageObj.battleId].players).length == 2) {
                 let startMessage = JSON.stringify({
                     type: 'start',
-                    players: Object.keys(battles[messageObj.battleId].players)
+                    players: Object.keys(battles[messageObj.battleId].players),
+                    blockRing: genRandomBlockRing()
                 });
                 Object.keys(battles[messageObj.battleId].players).forEach(playerName => {
                     let playerSocket = battles[messageObj.battleId].players[playerName];
