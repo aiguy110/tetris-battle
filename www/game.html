@@ -8,13 +8,22 @@
         <audio id="thud" src="thud.wav"></audio>
         <audio id="game-over" src="gameover.wav"></audio>
     </head>
-    <body>
-        <canvas id='storage-block' class='block-storage' width='80' height='80'></canvas>
-        <canvas id='my-board-canvas' class='game-board' width='200' height='400'></canvas>
-        <canvas id='queue-block-1' class='block-queue' width='80' height='80'></canvas>
-        <canvas id='queue-block-2' class='block-queue' width='80' height='80'></canvas>
-        <canvas id='queue-block-3' class='block-queue' width='80' height='80'></canvas>
-        <canvas id='opponent-board-canvas' class='game-board' width='100' height='200'></canvas>
+    <body class='flex-column-container'>
+        <div class='flex-row-container'>
+            <canvas id='storage-block' class='block-storage' width='80' height='80'></canvas>
+        </div>
+        <div class='flex-row-container'>
+            <canvas id='my-board-canvas' class='my-game-board' width='200' height='400'></canvas>
+        </div>
+        <div class='flex-row-container'>
+            <canvas id='queue-block-1' class='block-queue' width='80' height='80'></canvas>
+            <canvas id='queue-block-2' class='block-queue' width='80' height='80'></canvas>
+            <canvas id='queue-block-3' class='block-queue' width='80' height='80'></canvas>
+        </div>
+        <div class='flex-row-container-reversed'>
+            <canvas id='opponent-board-canvas' class='opp-game-board' width='100' height='200'></canvas>
+        </div>
+
         <script src='game.js'></script>
     </body>
 </html>

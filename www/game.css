@@ -1,14 +1,35 @@
-.game-board {
-    margin: auto;
+.flex-column-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-row-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-row-container-reversed {
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.my-game-board {
+    margin: 5px;
+    border: solid;
+}
+
+.opp-game-board {
+    margin: 5px;
+    margin-left: 50px;
     border: solid;
 }
 
 .block-queue {
-    margin: auto;
+    margin: 5px;
     border: solid;
 }
 
 .block-storage {
-    margin: auto;
+    margin: 5px;
     border: solid;
 }
