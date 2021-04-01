@@ -557,6 +557,13 @@ class BlockWindow {
     }
 }
 
+// Populate name banners
+var myNameBanner = document.getElementById('my-name-banner');
+myNameBanner.innerText = getUrlParams().name + "'s Game";
+
+var oppNameBanner = document.getElementById('opp-name-banner');
+oppNameBanner.innerText = "Waiting for other player...";
+
 // Initialize BlockWindow objects
 var storageWindowCtx = document.getElementById('storage-block').getContext('2d');
 var storageWindow = new BlockWindow(storageWindowCtx);
@@ -589,8 +596,8 @@ function keyboardEventHandler(event) {
     DOWN_KEYS  = ['ArrowDown' , 'KeyS' ];
     LROT_KEYS  = ['PageUp'    , 'KeyQ' ];
     RROT_KEYS  = ['PageDown'  , 'KeyE' ];
-    DROP_KEYS  = ['ArrowUp'   , 'KeyW', 'Space'];
-    STORE_KEYS = ['Enter'     , 'KeyF'];
+    DROP_KEYS  = ['ArrowUp'   , 'KeyW' ];
+    STORE_KEYS = ['Enter'     , 'KeyF', 'Space'];
 
     if ( RIGHT_KEYS.includes(event.code) ) {
         myGame.moveCursorBlock([0, 1]);
@@ -617,7 +624,12 @@ var socket = new WebSocket('ws://' + window.location.host);
 function wsMessageHandler( event ) {
     let messageObj = JSON.parse( event.data );
     if (messageObj.type == 'start') {
-        // TODO: Show the other players name somewhere
+        let myName = getUrlParams().name;
+        messageObj.players.forEach( player => {
+            if (player != myName){
+                oppNameBanner.innerText = player + "'s Game"
+            }
+        });
         myGame.startGame(messageObj.blockRing);
     }else if (messageObj.type == 'boardUpdate') {
         if (messageObj.player == getUrlParams().name) {

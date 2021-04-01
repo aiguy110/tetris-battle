@@ -65,6 +65,10 @@ wsServer.on('connection', socket => {
         // Process registations
         if (messageObj.type == 'register') {
             console.log(`Got registration message from ${messageObj.name} for battle ${messageObj.battleId}`);
+            if ( !(messageObj.battleId in battles) ){
+                console.log('No battle with that ID exists. Aborting processing for this message.');
+                return;
+            }
             if (Object.keys(battles[messageObj.battleId].players).length == 2) {
                 console.log('This battle is already full. Not allowing registration.');
                 return;
