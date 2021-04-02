@@ -239,8 +239,6 @@ class TetrisGame {
     }
     
     moveCursorBlock(delta) {
-        clearTimeout(this.tickTimeout);
-
         let di = delta[0];
         let dj = delta[1];
         let newPos = [this.currentPos[0] + di, this.currentPos[1] + dj];
@@ -251,11 +249,14 @@ class TetrisGame {
         }else if (this.isCollided(shape, newPos, this.currentRot) && di==1 && dj==0) {
             this.dropCursorBlock();
         }
-
+        
         this.renderBoard();
         this.sendCursorUpdate(socket);
-
-        this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
+        
+        if (di != 0) {
+            clearTimeout(this.tickTimeout);
+            this.tickTimeout = setTimeout( () => this.moveCursorBlock([1, 0]), this.tickInterval );
+        }
     }
 
     rotateCursorBlock(deltaRot) {
@@ -345,15 +346,19 @@ class TetrisGame {
             // Nope
             storageWindow.setBlock( this.currentBlockName );
             this.incramentBlockRing();
-            this.renderBoard();
             this.updateQueueWindows();
         } else {
             // Yep
             let temp = this.currentBlockName;
             this.currentBlockName = this.storageWindow.blockName;
             this.storageWindow.setBlock(temp);
-            this.renderBoard();
         }
+
+        // Reset the cursor rot and try to currect any collisions
+        this.currentRot = TetrisGame.defaultRot;
+        this.rotateCursorBlock(0); // Call this just for its collision correction logic
+
+        this.renderBoard();
     }
 
     handleCompletedRows() {
