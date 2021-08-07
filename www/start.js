@@ -44,7 +44,7 @@ createNewButton.onclick = () => {
         if('error' in data) {
             alert(data.error);
         }else{
-            window.location.href = `/game.html?battleId=${battleId}&name=${username}`;
+            window.location.href = `/game.html?battleId=${encodeURI(battleId)}&name=${encodeURI(username)}`;
         }
     });
 }
@@ -57,7 +57,7 @@ joinExistingButton.onclick = () => {
         return;
     }
 
-    fetch(`/battle?battleId=${battleId}`)
+    fetch(`/battle?battleId=${encodeURI(battleId)}`)
         .then(resp => resp.json())
         .then(data => {
             if ('error' in data) {
@@ -69,7 +69,7 @@ joinExistingButton.onclick = () => {
                     alert('A game with that BattleID exists, but it is already full. Please try another BattleID.')
                     return;
                 }
-                window.location.href =  `/game.html?battleId=${battleId}&name=${username}`;
+                window.location.href =  `/game.html?battleId=${encodeURI(battleId)}&name=${encodeURI(username)}`;
             }
         });
 }

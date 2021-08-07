@@ -77,6 +77,7 @@ wsServer.on('connection', socket => {
             
             // If this game is now full, send start message to participants
             if (Object.keys(battles[messageObj.battleId].players).length == 2) {
+                console.log('Sending start message to players:', Object.keys(battles[messageObj.battleId].players));
                 let startMessage = JSON.stringify({
                     type: 'start',
                     players: Object.keys(battles[messageObj.battleId].players),

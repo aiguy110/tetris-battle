@@ -92,7 +92,7 @@ function getUrlParams() {
     let params = {};
     kvStrings.forEach(kvStr => {
         let kvPair = kvStr.split('=');
-        params[ kvPair[0] ] = kvPair[1];
+        params[ kvPair[0] ] = decodeURI(kvPair[1]);
     });
     return params;
 }
