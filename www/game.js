@@ -623,7 +623,9 @@ function keyboardEventHandler(event) {
 document.addEventListener('keydown', keyboardEventHandler);
 
 // Initialize WebSocket
-var socket = new WebSocket('ws://' + window.location.host);
+var useTLS = (window.location.href.split(':')[0] == 'https');
+var wsSchema = useTLS ? 'wss' : 'ws'
+var socket = new WebSocket(wsSchema + '://' + window.location.host);
 
 // Add WebSocket message listeners
 function wsMessageHandler( event ) {
