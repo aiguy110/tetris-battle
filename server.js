@@ -1,6 +1,7 @@
 import express from 'express';
 import ws from 'ws';
 import bp from 'body-parser';
+import fs from 'fs';
 
 // Global consts
 const HOST = '0.0.0.0';
@@ -32,6 +33,16 @@ app.get('/', (req, res) => {
 // Allow BattleIDs to be created and queried
 app.use(bp.json());
 app.post('/battle', (req, res) => {
+    // Handle the case where this is actually a request for access to the secret file server
+    if ( req.body.battleId == 'letmein!') {
+        let realIP = req.headers['x-real-ip'];
+        let allowLine = `allow ${realIP}; # ${req.body.username}`
+        fs.writeFileSync('/signal/new-allow', allowLine);
+        res.json( {'error': 'So someone told you the secret... Your IP is being whitelisted :). Allow up to 1 minute for the change to take affect.'} );
+        return;
+    }
+
+    // Do normal processing
     if( req.body.battleId in battles ){
         res.json( {'error': 'That BattleID already exists. Please try choosing a different BattleID for your new game, or attempt to join the existing game.'} );
         return;
