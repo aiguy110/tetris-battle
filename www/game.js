@@ -692,7 +692,7 @@ function handleTouchMove(event) {
 
 function handleTouchEnd(event) {
     event.preventDefault();
-    console.log('Touch ended', event, maxDistFromStart);
+    console.log('Touch ended', event, maxDistFromStart, touchStartY, screen.height);
     
     if (maxDistFromStart < stepSize) {
         if (touchStartY < screen.height / 4) {
@@ -726,10 +726,10 @@ function removeTouch(touch) {
     }
 }
 
-document.addEventListener('touchstart', handleTouchStart);
-document.addEventListener('touchend', handleTouchEnd);
-document.addEventListener('touchcancel', handleTouchEnd);
-document.addEventListener('touchmove', handleTouchMove);
+document.getElementsByTagName('body')[0].addEventListener('touchstart', handleTouchStart);
+document.getElementsByTagName('body')[0].addEventListener('touchend', handleTouchEnd);
+document.getElementsByTagName('body')[0].addEventListener('touchcancel', handleTouchEnd);
+document.getElementsByTagName('body')[0].addEventListener('touchmove', handleTouchMove);
 
 
 // Initialize WebSocket
