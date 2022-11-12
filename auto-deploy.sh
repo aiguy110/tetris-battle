@@ -4,7 +4,7 @@ LOG_FILE=/tmp/tetris-deploy.log
 
 # Logging convenience function
 function log() {
-    echo "$DATE: $@" >> $LOG_FILE
+    echo "$(date): $@" >> $LOG_FILE
 }
 
 # Don't run two instances at once
@@ -36,7 +36,7 @@ if [ $OLD_STAG_IMAGE != $NEW_STAG_IMAGE ] || [ $OLD_PROD_IMAGE != $NEW_PROD_IMAG
 fi
 
 if [ $OLD_STAG_IMAGE != $NEW_STAG_IMAGE ]; then
-    log "Staging image has updated from $OLD_STAG_IMAGE to $NEW_STAGE_IMAGE. Starting new container."
+    log "Staging image has updated from $OLD_STAG_IMAGE to $NEW_STAG_IMAGE. Starting new container."
     OLD_CONTAINER_ID=$(echo "$CONTAINER_INFO" | grep $OLD_STAG_IMAGE | awk '{print $1}')
     docker kill $OLD_CONTAINER_ID
     docker run -p 8001:8000 -d $NEW_STAG_IMAGE
