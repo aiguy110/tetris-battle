@@ -5,6 +5,6 @@ WORKDIR /usr/tetris-battle
 COPY . .
 RUN npm i 
 
-EXPOSE 80
+EXPOSE 8000
 
 CMD [ "node", "server.js" ]

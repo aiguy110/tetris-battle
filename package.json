@@ -1,6 +1,6 @@
 {
   "name": "tetris-battle",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Network-multiplayer competative Tetris game",
   "main": "server.js",
   "type": "module",

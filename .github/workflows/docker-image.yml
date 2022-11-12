@@ -39,7 +39,8 @@ jobs:
              echo "TAGS=aiguy110/tetris-battle:v${VERSION},aiguy110/tetris-battle:latest" > $GITHUB_ENV
           else
              echo "Doing staging deploy"
-             echo "TAGS=aiguy110/tetris-battle:v${VERSION},aiguy110/tetris-battle:latest-staging" > $GITHUB_ENV   
+             echo "TAGS=aiguy110/tetris-battle:v${VERSION},aiguy110/tetris-battle:latest-staging" > $GITHUB_ENV
+          fi
       -
         name: Build and push
         uses: docker/build-push-action@v3
