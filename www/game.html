@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
         <link rel="shortcut icon" href="/icon.png" />
         <link rel="stylesheet" href="game.css">
         <audio id="ting" src="ting.wav"></audio>
@@ -8,24 +12,24 @@
         <audio id="thud" src="thud.wav"></audio>
         <audio id="game-over" src="gameover.wav"></audio>
     </head>
-    <body class='flex-column-container'>
-        <div class='flex-row-container'>
+    <body class='flex-column-container justify-content-center min-vh-100'>
+        <div class='container flex-column-container align-items-center'>
             <h1 id='my-name-banner' class='my-banner'></h1>
-            <div class='flex-column-container'>
-                <div class='flex-row-container'>
-                    <canvas id='storage-block' class='block-storage' width='80' height='80'></canvas>
+            <div class='flex-row-container'>
+                <div class='flex-column-container'>
+                    <canvas id='storage-block' class='block-storage'></canvas>
                 </div>
-                <div class='flex-row-container'>
+                <div class='flex-column-container'>
                     <canvas id='my-board-canvas' class='my-game-board' width='200' height='400'></canvas>
                 </div>
-                <div class='flex-row-container'>
-                    <canvas id='queue-block-1' class='block-queue' width='80' height='80'></canvas>
-                    <canvas id='queue-block-2' class='block-queue' width='80' height='80'></canvas>
-                    <canvas id='queue-block-3' class='block-queue' width='80' height='80'></canvas>
+                <div class='flex-column-container'>
+                    <canvas id='queue-block-1' class='block-queue'></canvas>
+                    <canvas id='queue-block-2' class='block-queue'></canvas>
+                    <canvas id='queue-block-3' class='block-queue'></canvas>
                 </div>
             </div>
         </div>
-        <div class='flex-row-container-reversed'>
+        <div class='flex-row-container-reversed align-items-center'>
             <canvas id='opponent-board-canvas' class='opp-game-board' width='100' height='200'></canvas>
             <h3 id='opp-name-banner' class='opp-banner'></h3>
         </div>

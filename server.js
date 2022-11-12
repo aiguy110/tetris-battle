@@ -5,7 +5,7 @@ import fs from 'fs';
 
 // Global consts
 const HOST = '0.0.0.0';
-const PORT = 80;
+const PORT = 8000;
 
 // Generate lists of random block names
 function genRandomBlockRing() {

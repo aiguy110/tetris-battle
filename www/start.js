@@ -12,7 +12,7 @@ nameSubmitButton.onclick = () => {
     
     // Disable further name changes
     nameTextBox.setAttribute('disabled', 'disabled');
-    nameSubmitButton.style.display = 'none';
+    //nameSubmitButton.style.display = 'none';
 
     // Enable Battle ID related elements
     battleIdTextBox.removeAttribute('disabled');

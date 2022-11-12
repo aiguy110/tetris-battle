@@ -5,6 +5,11 @@
 
 .flex-row-container {
     display: flex;
+    flex-direction: row;
+}
+
+.flex-column-container {
+    display: flex;
     flex-direction: column;
 }
 
@@ -20,7 +25,6 @@
 
 .opp-banner {
     margin: 5px;
-    margin-left: 50px;
 }
 
 .my-game-board {
@@ -30,7 +34,6 @@
 
 .opp-game-board {
     margin: 5px;
-    margin-left: 50px;
     border: solid;
     max-width: 100px;
     max-height: 200px;
@@ -39,9 +42,13 @@
 .block-queue {
     margin: 5px;
     border: solid;
+    width: min(80px, 15vw);
+    height: min(80px, 15vw);
 }
 
 .block-storage {
     margin: 5px;
     border: solid;
+    width: min(80px, 15vw);
+    height: min(80px, 15vw);
 }

@@ -594,7 +594,7 @@ var oppCtx = document.getElementById('opponent-board-canvas').getContext('2d');
 var oppGame = new TetrisGame(oppCtx);
 oppGame.renderBoard();
 
-// Add input event listeners
+// Add keyboard event listeners
 function keyboardEventHandler(event) {
     LEFT_KEYS  = ['ArrowLeft' , 'KeyA' ];
     RIGHT_KEYS = ['ArrowRight', 'KeyD' ];
@@ -621,6 +621,112 @@ function keyboardEventHandler(event) {
     }
 }
 document.addEventListener('keydown', keyboardEventHandler);
+
+// Add touch event listeners (we'll assume only one touch at a time)
+var touchActive = false;
+var touchStartX = 0;
+var touchStartY = 0;
+var touchLastStepX = 0;
+var touchLastStepY = 0;
+var maxDistFromStart = 0;
+var maxXDistFromStart = 0;
+var lastSeenY = 0;
+
+const stepSize = 40;
+
+function handleTouchStart(event) {
+    console.log('Touch started', event);
+    let touch = event.touches[0];
+    touchActive = true;
+    touchStartX = touch.screenX;
+    touchStartY = touch.screenY;
+    touchLastStepX = touch.screenX;
+    touchLastStepY = touch.screenY;
+    lastSeenY = touch.screenY;
+}
+
+function handleTouchMove(event) {
+    console.log('Touch moved');
+    let touch = event.touches[0];
+    let deltaX = touch.screenX - touchLastStepX;
+    let deltaY = touch.screenY - touchLastStepY;
+
+    let distFromStart = Math.sqrt((touch.screenX-touchStartX)**2 + (touch.screenY-touchStartY)**2);
+    console.log('Dist from start', distFromStart, 'Max dist from start', maxDistFromStart);
+    if (distFromStart > maxDistFromStart) {
+        maxDistFromStart = distFromStart;
+    }
+
+    let xDistFromStart = Math.abs(touch.screenX - touchStartX);
+    if (xDistFromStart > maxXDistFromStart) {
+        maxXDistFromStart = xDistFromStart;
+    }
+
+    lastSeenY = touch.screenY;
+    
+    if (deltaX > 0) {
+        xSteps = Math.floor( deltaX / stepSize );
+        for (let n=0; n<xSteps; n++) {
+            myGame.moveCursorBlock([0,1]);
+        }
+        touchLastStepX += xSteps * stepSize;
+    } else {
+        xSteps = Math.floor( - deltaX / stepSize );
+        for (let n=0; n<xSteps; n++) {
+            myGame.moveCursorBlock([0,-1]);
+        }
+        touchLastStepX -= xSteps * stepSize;
+    }
+
+    if (deltaY > 0) {
+        ySteps = Math.floor( deltaY / stepSize );
+        for (let n=0; n<ySteps; n++) {
+            myGame.moveCursorBlock([1,0]);
+        }
+        touchLastStepY += ySteps * stepSize;
+    }
+}
+
+function handleTouchEnd(event) {
+    console.log('Touch ended', event, maxDistFromStart);
+    
+    if (maxDistFromStart < stepSize) {
+        if (touch.screenY < screen.height / 4) {
+            myGame.doStorageSwap()
+        } else {
+            if (touchStartX < screen.width / 2) {
+                myGame.rotateCursorBlock(-1);
+            } else {
+                myGame.rotateCursorBlock(1);
+            }
+        }
+    } else if (maxXDistFromStart < stepSize && (lastSeenY - touchStartY) < -2*stepSize) {
+        myGame.dropCursorBlock();
+    }
+    
+    touchActive = false;
+    touchStartX = 0;
+    touchStartY = 0;
+    touchLastStepX = 0;
+    touchLastStepY = 0;
+    maxDistFromStart = 0;
+    maxXDistFromStart = 0;
+    lastSeenY = 0;
+}
+
+function removeTouch(touch) {
+    console.log('Checking for touch.identifier', touch.identifier, ' in ', activeTouches);
+    if (touch.identifier in activeTouches) {
+        console.log('Removing touch' + touch.identifier);
+        delete activeTouches[touch.identifier];
+    }
+}
+
+document.addEventListener('touchstart', handleTouchStart);
+document.addEventListener('touchend', handleTouchEnd);
+document.addEventListener('touchcancel', handleTouchEnd);
+document.addEventListener('touchmove', handleTouchMove);
+
 
 // Initialize WebSocket
 var useTLS = (window.location.href.split(':')[0] == 'https');
