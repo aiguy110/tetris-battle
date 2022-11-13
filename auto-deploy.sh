@@ -39,7 +39,7 @@ if [ $OLD_STAG_IMAGE != $NEW_STAG_IMAGE ]; then
     log "Staging image has updated from $OLD_STAG_IMAGE to $NEW_STAG_IMAGE. Starting new container."
     OLD_CONTAINER_ID=$(echo "$CONTAINER_INFO" | grep $OLD_STAG_IMAGE | awk '{print $1}')
     docker kill $OLD_CONTAINER_ID
-    docker run -p 8001:8000 -d $NEW_STAG_IMAGE
+    docker run -p 8001:8000 -d --restart unless-stopped $NEW_STAG_IMAGE
     docker image rm $OLD_STAG_IMAGE
 fi
 
@@ -47,6 +47,6 @@ if [ $OLD_PROD_IMAGE != $NEW_PROD_IMAGE ]; then
     log "Production image has updated from $OLD_PROD_IMAGE to $NEW_PROD_IMAGE. Starting new container."
     OLD_CONTAINER_ID=$(echo "$CONTAINER_INFO" | grep $OLD_PROD_IMAGE | awk '{print $1}')
     docker kill $OLD_CONTAINER_ID
-    docker run -p 8000:8000 -d $NEW_PROD_IMAGE
+    docker run -p 8000:8000 -d --restart unless-stopped $NEW_PROD_IMAGE
     docker image rm $OLD_PROD_IMAGE
 fi
