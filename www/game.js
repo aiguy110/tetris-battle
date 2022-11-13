@@ -720,8 +720,10 @@ document.getElementsByTagName('body')[0].addEventListener('touchend', handleTouc
 document.getElementsByTagName('body')[0].addEventListener('touchcancel', handleTouchEnd);
 document.getElementsByTagName('body')[0].addEventListener('touchmove', handleTouchMove);
 
+
 // Allow fullscreen (useful for mobile)
 function tryFullscreen() {
+    alert("Looks like you are trying to enable fullscreen");
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch((err) => {
         alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
@@ -731,6 +733,26 @@ function tryFullscreen() {
     }
 }
 document.getElementById('storage-block').addEventListener('click', _ => tryFullscreen())
+
+// Can't enable fullscreen mode on iOS (!!??!!), so do this to prevent terrible multi-touch experience
+// Lifted from: https://stackoverflow.com/questions/11689353/disable-pinch-zoom-on-mobile-web
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
+
+document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
+
+document.addEventListener('gestureend', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
 
 // Initialize WebSocket
 var useTLS = (window.location.href.split(':')[0] == 'https');
