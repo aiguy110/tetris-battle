@@ -635,8 +635,6 @@ var lastSeenY = 0;
 const stepSize = 40;
 
 function handleTouchStart(event) {
-    event.preventDefault();
-    console.log('Touch started', event);
     let touch = event.touches[0];
     touchActive = true;
     touchStartX = touch.screenX;
@@ -647,15 +645,11 @@ function handleTouchStart(event) {
 }
 
 function handleTouchMove(event) {
-    event.preventDefault();
-    console.log('Touch moved');
-
     let touch = event.touches[0];
     let deltaX = touch.screenX - touchLastStepX;
     let deltaY = touch.screenY - touchLastStepY;
 
     let distFromStart = Math.sqrt((touch.screenX-touchStartX)**2 + (touch.screenY-touchStartY)**2);
-    console.log('Dist from start', distFromStart, 'Max dist from start', maxDistFromStart);
     if (distFromStart > maxDistFromStart) {
         maxDistFromStart = distFromStart;
     }
@@ -691,9 +685,6 @@ function handleTouchMove(event) {
 }
 
 function handleTouchEnd(event) {
-    event.preventDefault();
-    console.log('Touch ended', event, maxDistFromStart, touchStartY, screen.height);
-    
     if (maxDistFromStart < stepSize) {
         if (touchStartY < screen.height / 4) {
             myGame.doStorageSwap()
@@ -719,9 +710,7 @@ function handleTouchEnd(event) {
 }
 
 function removeTouch(touch) {
-    console.log('Checking for touch.identifier', touch.identifier, ' in ', activeTouches);
     if (touch.identifier in activeTouches) {
-        console.log('Removing touch' + touch.identifier);
         delete activeTouches[touch.identifier];
     }
 }
@@ -731,6 +720,17 @@ document.getElementsByTagName('body')[0].addEventListener('touchend', handleTouc
 document.getElementsByTagName('body')[0].addEventListener('touchcancel', handleTouchEnd);
 document.getElementsByTagName('body')[0].addEventListener('touchmove', handleTouchMove);
 
+// Allow fullscreen (useful for mobile)
+function tryFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch((err) => {
+        alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+        }).then(() => {
+            screen.orientation.lock('portrait');
+        })
+    }
+}
+document.getElementById('storage-block').addEventListener('click', _ => tryFullscreen())
 
 // Initialize WebSocket
 var useTLS = (window.location.href.split(':')[0] == 'https');
