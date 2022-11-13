@@ -635,6 +635,7 @@ var lastSeenY = 0;
 const stepSize = 40;
 
 function handleTouchStart(event) {
+    event.preventDefault();
     console.log('Touch started', event);
     let touch = event.touches[0];
     touchActive = true;
@@ -646,7 +647,9 @@ function handleTouchStart(event) {
 }
 
 function handleTouchMove(event) {
+    event.preventDefault();
     console.log('Touch moved');
+
     let touch = event.touches[0];
     let deltaX = touch.screenX - touchLastStepX;
     let deltaY = touch.screenY - touchLastStepY;
@@ -688,10 +691,11 @@ function handleTouchMove(event) {
 }
 
 function handleTouchEnd(event) {
-    console.log('Touch ended', event, maxDistFromStart);
+    event.preventDefault();
+    console.log('Touch ended', event, maxDistFromStart, touchStartY, screen.height);
     
     if (maxDistFromStart < stepSize) {
-        if (touch.screenY < screen.height / 4) {
+        if (touchStartY < screen.height / 4) {
             myGame.doStorageSwap()
         } else {
             if (touchStartX < screen.width / 2) {
@@ -722,10 +726,10 @@ function removeTouch(touch) {
     }
 }
 
-document.addEventListener('touchstart', handleTouchStart);
-document.addEventListener('touchend', handleTouchEnd);
-document.addEventListener('touchcancel', handleTouchEnd);
-document.addEventListener('touchmove', handleTouchMove);
+document.getElementsByTagName('body')[0].addEventListener('touchstart', handleTouchStart);
+document.getElementsByTagName('body')[0].addEventListener('touchend', handleTouchEnd);
+document.getElementsByTagName('body')[0].addEventListener('touchcancel', handleTouchEnd);
+document.getElementsByTagName('body')[0].addEventListener('touchmove', handleTouchMove);
 
 
 // Initialize WebSocket
