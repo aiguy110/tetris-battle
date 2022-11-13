@@ -635,8 +635,6 @@ var lastSeenY = 0;
 const stepSize = 40;
 
 function handleTouchStart(event) {
-    event.preventDefault();
-    console.log('Touch started', event);
     let touch = event.touches[0];
     touchActive = true;
     touchStartX = touch.screenX;
@@ -647,15 +645,11 @@ function handleTouchStart(event) {
 }
 
 function handleTouchMove(event) {
-    event.preventDefault();
-    console.log('Touch moved');
-
     let touch = event.touches[0];
     let deltaX = touch.screenX - touchLastStepX;
     let deltaY = touch.screenY - touchLastStepY;
 
     let distFromStart = Math.sqrt((touch.screenX-touchStartX)**2 + (touch.screenY-touchStartY)**2);
-    console.log('Dist from start', distFromStart, 'Max dist from start', maxDistFromStart);
     if (distFromStart > maxDistFromStart) {
         maxDistFromStart = distFromStart;
     }
@@ -691,9 +685,6 @@ function handleTouchMove(event) {
 }
 
 function handleTouchEnd(event) {
-    event.preventDefault();
-    console.log('Touch ended', event, maxDistFromStart, touchStartY, screen.height);
-    
     if (maxDistFromStart < stepSize) {
         if (touchStartY < screen.height / 4) {
             myGame.doStorageSwap()
@@ -719,9 +710,7 @@ function handleTouchEnd(event) {
 }
 
 function removeTouch(touch) {
-    console.log('Checking for touch.identifier', touch.identifier, ' in ', activeTouches);
     if (touch.identifier in activeTouches) {
-        console.log('Removing touch' + touch.identifier);
         delete activeTouches[touch.identifier];
     }
 }
@@ -730,6 +719,52 @@ document.getElementsByTagName('body')[0].addEventListener('touchstart', handleTo
 document.getElementsByTagName('body')[0].addEventListener('touchend', handleTouchEnd);
 document.getElementsByTagName('body')[0].addEventListener('touchcancel', handleTouchEnd);
 document.getElementsByTagName('body')[0].addEventListener('touchmove', handleTouchMove);
+
+
+// Allow fullscreen (useful for mobile)
+function tryFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch((err) => {
+        alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+        }).then(() => {
+            screen.orientation.lock('portrait');
+        })
+    }
+}
+document.getElementById('storage-block').addEventListener('click', _ => tryFullscreen())
+
+// Can't enable fullscreen mode on iOS (!!??!!), so do this to prevent terrible page-zoom experience
+// Lifted from: https://stackoverflow.com/questions/11689353/disable-pinch-zoom-on-mobile-web
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
+
+document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
+
+document.addEventListener('gestureend', function(e) {
+    e.preventDefault();
+    // special hack to prevent zoom-to-tabs gesture in safari
+    document.body.style.zoom = 0.99;
+});
+
+document.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+})
+
+document.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+})
+
+document.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    e.target.click()
+})
 
 
 // Initialize WebSocket
